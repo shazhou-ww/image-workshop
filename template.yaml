@@ -39,6 +39,26 @@ Resources:
           Properties:
             Path: /text-region-selector
             Method: POST
+
+  ZeroShotRegionSelectorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/zero-shot-region-selector/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: Zero-shot object detection using Grounding DINO or OWL-ViT
+      Environment:
+        Variables:
+          NODE_ENV: ${Env:NODE_ENV,prod}
+          HUGGINGFACE_API_KEY: ${Env:HUGGINGFACE_API_KEY}
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /zero-shot-region-selector
+            Method: POST
 Outputs:
   ApiGatewayApi:
     Description: API Gateway endpoint URL
