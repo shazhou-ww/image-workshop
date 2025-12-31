@@ -11,9 +11,10 @@
     "build": "esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js --external:\"@aws-sdk/*\" --minify --sourcemap",
     "clean": "rimraf dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@huggingface/inference": "^4.13.5"
+  },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145"
   }
 }
-

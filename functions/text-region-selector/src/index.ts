@@ -1,4 +1,5 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
+import { InferenceClient } from '@huggingface/inference';
 
 /**
  * Request body for text-region-selector
@@ -6,180 +7,66 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-l
 interface RequestBody {
   /** Base64 encoded image data (with or without data URI prefix) */
   image: string;
-  /** Text query to match regions against */
+  /** Text query to match regions against (e.g., "boat", "cat", "car") */
   query: string;
-  /** Confidence threshold (0-1), default 0.5 */
+  /** Confidence threshold (0-1), default 0.3 */
   threshold?: number;
 }
 
 /**
- * A matched region with mask data
+ * A detected region matching the query
  */
-interface MatchedRegion {
-  /** Bounding box [x, y, width, height] */
+interface DetectedRegion {
+  /** Bounding box [x, y, width, height] in pixels */
   bbox: [number, number, number, number];
-  /** Base64 encoded binary mask (PNG format) */
-  mask: string;
-  /** Similarity score between the region and the query */
+  /** Detection confidence score */
   score: number;
+  /** The detected label */
+  label: string;
 }
 
 /**
  * Response body
  */
 interface ResponseBody {
-  /** Array of matched regions */
-  regions: MatchedRegion[];
-  /** Total number of segments found by SAM2 */
-  totalSegments: number;
-  /** Number of regions matching the query above threshold */
-  matchedCount: number;
-}
-
-/**
- * SAM2 API response mask structure
- */
-interface SAM2Mask {
-  /** Mask as base64 encoded PNG */
-  mask: string;
-  /** Bounding box [x_min, y_min, x_max, y_max] */
-  box: [number, number, number, number];
-  /** Prediction score from SAM2 */
-  score: number;
+  /** Array of detected regions matching the query */
+  regions: DetectedRegion[];
+  /** Number of regions detected */
+  count: number;
+  /** All detected objects (before filtering by query) */
+  allDetections?: DetectedRegion[];
 }
 
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
 
-// Hugging Face model endpoints
-const SAM2_MODEL = 'facebook/sam2-hiera-large';
-const CLIP_MODEL = 'openai/clip-vit-base-patch32';
+// COCO dataset labels that DETR can detect
+const COCO_LABELS = [
+  'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck',
+  'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench',
+  'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra',
+  'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
+  'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove',
+  'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
+  'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange',
+  'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
+  'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse',
+  'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink',
+  'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier',
+  'toothbrush'
+];
 
-/**
- * Call Hugging Face Inference API for SAM2 automatic mask generation
- */
-async function generateMasks(imageBase64: string): Promise<SAM2Mask[]> {
-  const response = await fetch(
-    `https://api-inference.huggingface.co/models/${SAM2_MODEL}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: imageBase64,
-        parameters: {
-          task: 'mask-generation',
-          // Subtask for automatic mask generation (no prompts)
-          subtask: 'automatic-mask-generation',
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`SAM2 API error: ${response.status} - ${errorText}`);
-  }
-
-  const result = (await response.json()) as
-    | Array<{ mask: string; box: [number, number, number, number]; score?: number }>
-    | { masks?: SAM2Mask[] }
-    | unknown;
-
-  // The API returns an array of masks with their bounding boxes
-  if (Array.isArray(result)) {
-    return result.map((item) => ({
-      mask: item.mask,
-      box: item.box,
-      score: item.score ?? 1.0,
-    }));
-  }
-
-  // Handle wrapped response
-  if (
-    result !== null &&
-    typeof result === 'object' &&
-    'masks' in result &&
-    Array.isArray(result.masks)
-  ) {
-    return result.masks;
-  }
-
-  console.warn('Unexpected SAM2 response format:', JSON.stringify(result).slice(0, 500));
-  return [];
-}
-
-
-/**
- * Call CLIP API to compute similarity between an image region and text
- */
-async function computeSimilarity(
-  imageBase64: string,
-  textQuery: string
-): Promise<number> {
-  // Use zero-shot image classification to compute similarity
-  const response = await fetch(
-    `https://api-inference.huggingface.co/models/${CLIP_MODEL}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: imageBase64,
-        parameters: {
-          candidate_labels: [textQuery, 'other', 'background'],
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`CLIP API error: ${response.status} - ${errorText}`);
-  }
-
-  const result = (await response.json()) as
-    | Array<{ label: string; score: number }>
-    | unknown;
-
-  // Result is an array of { label, score }
-  if (Array.isArray(result)) {
-    const match = result.find(
-      (item: { label: string; score: number }) => item.label === textQuery
-    );
-    return match?.score ?? 0;
-  }
-
-  console.warn('Unexpected CLIP response format:', JSON.stringify(result).slice(0, 500));
-  return 0;
-}
-
-/**
- * Apply mask to image and return the masked region as base64
- * This creates an image where only the masked area is visible
- *
- * Note: In production, you might want to use sharp or similar library
- * to actually crop/mask the image. For now, we return the original image
- * and rely on CLIP's ability to score the whole image context.
- */
-async function applyMaskToImage(imageBase64: string): Promise<string> {
-  // For now, we return the original image - CLIP will score based on whole image
-  // The bbox info is still available for the caller to use
-  return imageBase64;
-}
-
-/**
- * Convert bbox from [x_min, y_min, x_max, y_max] to [x, y, width, height]
- */
-function convertBbox(
-  box: [number, number, number, number]
-): [number, number, number, number] {
-  const [xMin, yMin, xMax, yMax] = box;
-  return [xMin, yMin, xMax - xMin, yMax - yMin];
-}
+// Mapping of common query terms to COCO labels
+const QUERY_MAPPINGS: Record<string, string[]> = {
+  'ship': ['boat'],
+  'sailing ship': ['boat'],
+  'sailboat': ['boat'],
+  '帆船': ['boat'],
+  '船': ['boat'],
+  'vehicle': ['car', 'truck', 'bus', 'motorcycle', 'bicycle', 'train', 'airplane', 'boat'],
+  'animal': ['bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe'],
+  'furniture': ['chair', 'couch', 'bed', 'dining table'],
+  'food': ['banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake'],
+};
 
 /**
  * Parse and validate the request body
@@ -199,27 +86,58 @@ function parseRequestBody(body: string | null): RequestBody {
     throw new Error('query field is required and must be a string');
   }
 
-  const threshold = parsed.threshold ?? 0.5;
+  const threshold = parsed.threshold ?? 0.3;
   if (typeof threshold !== 'number' || threshold < 0 || threshold > 1) {
     throw new Error('threshold must be a number between 0 and 1');
   }
 
   return {
     image: parsed.image,
-    query: parsed.query.trim(),
+    query: parsed.query.trim().toLowerCase(),
     threshold,
   };
 }
 
 /**
- * Strip data URI prefix from base64 image if present
+ * Convert base64 string to Blob for the inference client
  */
-function normalizeBase64Image(image: string): string {
-  const dataUriMatch = image.match(/^data:image\/\w+;base64,(.+)$/);
-  if (dataUriMatch) {
-    return dataUriMatch[1];
+function base64ToBlob(base64: string, mimeType = 'image/jpeg'): Blob {
+  // Remove data URI prefix if present
+  const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
+  const binaryString = atob(base64Data);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
-  return image;
+  return new Blob([bytes], { type: mimeType });
+}
+
+/**
+ * Get matching COCO labels for a query
+ */
+function getMatchingLabels(query: string): string[] {
+  const lowerQuery = query.toLowerCase();
+
+  // Check if there's a direct mapping
+  if (QUERY_MAPPINGS[lowerQuery]) {
+    return QUERY_MAPPINGS[lowerQuery];
+  }
+
+  // Check if query is a COCO label
+  if (COCO_LABELS.includes(lowerQuery)) {
+    return [lowerQuery];
+  }
+
+  // Check if query is contained in any COCO label
+  const partialMatches = COCO_LABELS.filter(
+    (label) => label.includes(lowerQuery) || lowerQuery.includes(label)
+  );
+  if (partialMatches.length > 0) {
+    return partialMatches;
+  }
+
+  // Return empty - will match all detections
+  return [];
 }
 
 export const handler = async (
@@ -243,65 +161,54 @@ export const handler = async (
 
     // Parse request
     const { image, query, threshold } = parseRequestBody(event.body);
-    const imageBase64 = normalizeBase64Image(image);
 
     console.log(`Processing query: "${query}" with threshold: ${threshold}`);
+    console.log(`HUGGINGFACE_API_KEY configured: yes (length: ${HUGGINGFACE_API_KEY.length})`);
 
-    // Step 1: Generate masks using SAM2
-    console.log('Calling SAM2 for mask generation...');
-    const masks = await generateMasks(imageBase64);
-    console.log(`SAM2 returned ${masks.length} masks`);
+    // Initialize Hugging Face Inference Client
+    const hf = new InferenceClient(HUGGINGFACE_API_KEY);
 
-    if (masks.length === 0) {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          regions: [],
-          totalSegments: 0,
-          matchedCount: 0,
-        } satisfies ResponseBody),
-      };
-    }
+    // Convert base64 to Blob
+    const imageBlob = base64ToBlob(image);
 
-    // Step 2: For each mask, compute CLIP similarity with the query
-    console.log('Computing CLIP similarities...');
-    const regionsWithScores: Array<{
-      mask: SAM2Mask;
-      clipScore: number;
-    }> = [];
+    // Get matching labels for the query
+    const matchingLabels = getMatchingLabels(query);
+    console.log(`Query "${query}" maps to labels: [${matchingLabels.join(', ')}]`);
 
-    // Process masks in parallel with some concurrency limit
-    const CONCURRENCY = 5;
-    for (let i = 0; i < masks.length; i += CONCURRENCY) {
-      const batch = masks.slice(i, i + CONCURRENCY);
-      const scores = await Promise.all(
-        batch.map(async (mask) => {
-          // Apply mask and compute similarity
-          const maskedImage = await applyMaskToImage(imageBase64);
-          const score = await computeSimilarity(maskedImage, query);
-          return { mask, clipScore: score };
-        })
-      );
-      regionsWithScores.push(...scores);
-    }
+    // Use object detection to get bounding boxes
+    console.log('Calling objectDetection with facebook/detr-resnet-50...');
+    const detectionResult = await hf.objectDetection({
+      model: 'facebook/detr-resnet-50',
+      data: imageBlob,
+    });
+    console.log(`Object detection found ${detectionResult.length} objects`);
 
-    // Step 3: Filter by threshold
-    const matchedRegions: MatchedRegion[] = regionsWithScores
-      .filter((r) => r.clipScore >= threshold!)
-      .map((r) => ({
-        bbox: convertBbox(r.mask.box),
-        mask: r.mask.mask,
-        score: r.clipScore,
+    // Transform all detections
+    const allDetections: DetectedRegion[] = detectionResult
+      .filter((d) => d.score >= threshold!)
+      .map((d) => ({
+        bbox: [
+          Math.round(d.box.xmin),
+          Math.round(d.box.ymin),
+          Math.round(d.box.xmax - d.box.xmin),
+          Math.round(d.box.ymax - d.box.ymin),
+        ] as [number, number, number, number],
+        score: d.score,
+        label: d.label,
       }))
       .sort((a, b) => b.score - a.score);
 
-    console.log(`Matched ${matchedRegions.length} regions above threshold ${threshold}`);
+    // Filter by matching labels (if any)
+    const regions: DetectedRegion[] = matchingLabels.length > 0
+      ? allDetections.filter((d) => matchingLabels.includes(d.label.toLowerCase()))
+      : allDetections;
+
+    console.log(`Found ${regions.length} regions matching query "${query}"`);
 
     const response: ResponseBody = {
-      regions: matchedRegions,
-      totalSegments: masks.length,
-      matchedCount: matchedRegions.length,
+      regions,
+      count: regions.length,
+      allDetections,
     };
 
     return {
