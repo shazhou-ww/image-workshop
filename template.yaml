@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: ImageWorkshop Lambda Functions
+
+Globals:
+  Function:
+    Runtime: nodejs24.x
+    Timeout: 30
+    MemorySize: 512
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+Resources:
+  TextRegionSelectorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/text-region-selector/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Environment:
+        Variables:
+          NODE_ENV: ${Env:NODE_ENV,prod}
+          HUGGINGFACE_API_KEY: ${Env:HUGGINGFACE_API_KEY}
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /text-region-selector
+            Method: POST
+Outputs:
+  ApiGatewayApi:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+

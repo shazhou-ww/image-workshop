@@ -1,0 +1,19 @@
+{
+  "name": "@myorg/function-text-region-selector",
+  "version": "1.0.0",
+  "description": "Lambda function: Select image regions using natural language with SAM2 and CLIP",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js --external:\"@aws-sdk/*\" --minify --sourcemap",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145"
+  }
+}
+
