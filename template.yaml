@@ -10,6 +10,8 @@ Globals:
     Environment:
       Variables:
         NODE_ENV: !Ref Environment
+        # Stability AI API Key - set via env.json for local, Secrets Manager for prod
+        STABILITY_API_KEY: !Ref StabilityApiKey
 
 Parameters:
   Environment:
@@ -19,6 +21,11 @@ Parameters:
       - dev
       - staging
       - prod
+  StabilityApiKey:
+    Type: String
+    Default: ""
+    Description: Stability AI API Key (leave empty to use Secrets Manager in production)
+    NoEcho: true
 
 Resources:
   # ==========================================================================
