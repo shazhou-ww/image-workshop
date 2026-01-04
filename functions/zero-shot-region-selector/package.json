@@ -1,5 +1,5 @@
 {
-  "name": "@myorg/function-zero-shot-region-selector",
+  "name": "@mitsein-ai/function-zero-shot-region-selector",
   "version": "1.0.0",
   "description": "Lambda function: Zero-shot object detection using SageMaker or HuggingFace Inference Endpoints",
   "main": "src/index.ts",

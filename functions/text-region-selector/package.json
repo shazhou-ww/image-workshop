@@ -1,5 +1,5 @@
 {
-  "name": "@myorg/function-text-region-selector",
+  "name": "@mitsein-ai/function-text-region-selector",
   "version": "1.0.0",
   "description": "Lambda function: Select image regions using natural language with SAM2 and CLIP",
   "main": "src/index.ts",
