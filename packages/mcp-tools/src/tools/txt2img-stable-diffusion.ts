@@ -11,11 +11,13 @@ export const txt2imgStableDiffusion: McpToolDefinition = {
     properties: {
       prompt: {
         type: 'string',
-        description: 'The text prompt describing what to generate. Be descriptive for best results.',
+        description:
+          'The text prompt describing what to generate. Be descriptive for best results.',
       },
       negative_prompt: {
         type: 'string',
-        description: 'What to avoid in the generated image (e.g., "blurry, low quality, distorted")',
+        description:
+          'What to avoid in the generated image (e.g., "blurry, low quality, distorted")',
       },
       width: {
         type: 'number',
@@ -36,14 +38,16 @@ export const txt2imgStableDiffusion: McpToolDefinition = {
       },
       cfg_scale: {
         type: 'number',
-        description: 'How closely to follow the prompt (default: 7.0). Higher = stricter adherence.',
+        description:
+          'How closely to follow the prompt (default: 7.0). Higher = stricter adherence.',
         default: 7.0,
         minimum: 1,
         maximum: 35,
       },
       seed: {
         type: 'number',
-        description: 'Random seed for reproducibility. If not provided, a random seed will be used.',
+        description:
+          'Random seed for reproducibility. If not provided, a random seed will be used.',
       },
       style_preset: {
         type: 'string',
@@ -78,4 +82,3 @@ export const txt2imgStableDiffusion: McpToolDefinition = {
     required: ['prompt'],
   },
 };
-

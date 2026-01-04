@@ -1,0 +1,16 @@
+{
+  "name": "@image-workshop/stability-api",
+  "version": "1.0.0",
+  "description": "Stability AI API client utilities for v2beta endpoints",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
+

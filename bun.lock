@@ -54,6 +54,96 @@
         "@types/aws-lambda": "^8.10.145",
       },
     },
+    "functions/tool-control-sketch": {
+      "name": "@image-workshop/tool-control-sketch",
+      "version": "1.0.0",
+      "dependencies": {
+        "@image-workshop/aws-config": "workspace:*",
+        "@image-workshop/mcp-tools": "workspace:*",
+        "@image-workshop/stability-api": "workspace:*",
+      },
+    },
+    "functions/tool-control-structure": {
+      "name": "@image-workshop/tool-control-structure",
+      "version": "1.0.0",
+      "dependencies": {
+        "@image-workshop/aws-config": "workspace:*",
+        "@image-workshop/mcp-tools": "workspace:*",
+        "@image-workshop/stability-api": "workspace:*",
+      },
+    },
+    "functions/tool-control-style": {
+      "name": "@image-workshop/tool-control-style",
+      "version": "1.0.0",
+      "dependencies": {
+        "@image-workshop/aws-config": "workspace:*",
+        "@image-workshop/mcp-tools": "workspace:*",
+        "@image-workshop/stability-api": "workspace:*",
+      },
+    },
+    "functions/tool-edit-erase": {
+      "name": "@image-workshop/tool-edit-erase",
+      "version": "1.0.0",
+      "dependencies": {
+        "@image-workshop/aws-config": "workspace:*",
+        "@image-workshop/mcp-tools": "workspace:*",
+        "@image-workshop/stability-api": "workspace:*",
+      },
+    },
+    "functions/tool-edit-inpaint": {
+      "name": "@image-workshop/tool-edit-inpaint",
+      "version": "1.0.0",
+      "dependencies": {
+        "@image-workshop/aws-config": "workspace:*",
+        "@image-workshop/mcp-tools": "workspace:*",
+        "@image-workshop/stability-api": "workspace:*",
+      },
+    },
+    "functions/tool-edit-outpaint": {
+      "name": "@image-workshop/tool-edit-outpaint",
+      "version": "1.0.0",
+      "dependencies": {
+        "@image-workshop/aws-config": "workspace:*",
+        "@image-workshop/mcp-tools": "workspace:*",
+        "@image-workshop/stability-api": "workspace:*",
+      },
+    },
+    "functions/tool-edit-remove-background": {
+      "name": "@image-workshop/tool-edit-remove-background",
+      "version": "1.0.0",
+      "dependencies": {
+        "@image-workshop/aws-config": "workspace:*",
+        "@image-workshop/mcp-tools": "workspace:*",
+        "@image-workshop/stability-api": "workspace:*",
+      },
+    },
+    "functions/tool-edit-search-and-recolor": {
+      "name": "@image-workshop/tool-edit-search-and-recolor",
+      "version": "1.0.0",
+      "dependencies": {
+        "@image-workshop/aws-config": "workspace:*",
+        "@image-workshop/mcp-tools": "workspace:*",
+        "@image-workshop/stability-api": "workspace:*",
+      },
+    },
+    "functions/tool-edit-search-and-replace": {
+      "name": "@image-workshop/tool-edit-search-and-replace",
+      "version": "1.0.0",
+      "dependencies": {
+        "@image-workshop/aws-config": "workspace:*",
+        "@image-workshop/mcp-tools": "workspace:*",
+        "@image-workshop/stability-api": "workspace:*",
+      },
+    },
+    "functions/tool-style-transfer": {
+      "name": "@image-workshop/tool-style-transfer",
+      "version": "1.0.0",
+      "dependencies": {
+        "@image-workshop/aws-config": "workspace:*",
+        "@image-workshop/mcp-tools": "workspace:*",
+        "@image-workshop/stability-api": "workspace:*",
+      },
+    },
     "functions/tool-txt2img-stable-diffusion": {
       "name": "@image-workshop/tool-txt2img-stable-diffusion",
       "version": "1.0.0",
@@ -82,6 +172,10 @@
     },
     "packages/mcp-tools": {
       "name": "@image-workshop/mcp-tools",
+      "version": "1.0.0",
+    },
+    "packages/stability-api": {
+      "name": "@image-workshop/stability-api",
       "version": "1.0.0",
     },
   },
@@ -275,6 +369,28 @@
     "@image-workshop/mcp-server": ["@image-workshop/mcp-server@workspace:functions/image-workshop-mcp"],
 
     "@image-workshop/mcp-tools": ["@image-workshop/mcp-tools@workspace:packages/mcp-tools"],
+
+    "@image-workshop/stability-api": ["@image-workshop/stability-api@workspace:packages/stability-api"],
+
+    "@image-workshop/tool-control-sketch": ["@image-workshop/tool-control-sketch@workspace:functions/tool-control-sketch"],
+
+    "@image-workshop/tool-control-structure": ["@image-workshop/tool-control-structure@workspace:functions/tool-control-structure"],
+
+    "@image-workshop/tool-control-style": ["@image-workshop/tool-control-style@workspace:functions/tool-control-style"],
+
+    "@image-workshop/tool-edit-erase": ["@image-workshop/tool-edit-erase@workspace:functions/tool-edit-erase"],
+
+    "@image-workshop/tool-edit-inpaint": ["@image-workshop/tool-edit-inpaint@workspace:functions/tool-edit-inpaint"],
+
+    "@image-workshop/tool-edit-outpaint": ["@image-workshop/tool-edit-outpaint@workspace:functions/tool-edit-outpaint"],
+
+    "@image-workshop/tool-edit-remove-background": ["@image-workshop/tool-edit-remove-background@workspace:functions/tool-edit-remove-background"],
+
+    "@image-workshop/tool-edit-search-and-recolor": ["@image-workshop/tool-edit-search-and-recolor@workspace:functions/tool-edit-search-and-recolor"],
+
+    "@image-workshop/tool-edit-search-and-replace": ["@image-workshop/tool-edit-search-and-replace@workspace:functions/tool-edit-search-and-replace"],
+
+    "@image-workshop/tool-style-transfer": ["@image-workshop/tool-style-transfer@workspace:functions/tool-style-transfer"],
 
     "@image-workshop/tool-txt2img-stable-diffusion": ["@image-workshop/tool-txt2img-stable-diffusion@workspace:functions/tool-txt2img-stable-diffusion"],
 

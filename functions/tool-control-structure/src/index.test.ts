@@ -1,0 +1,10 @@
+import { describe, expect, it } from 'vitest';
+import { toolSchema } from './index';
+
+describe('tool-control-structure', () => {
+  it('should have valid tool schema', () => {
+    expect(toolSchema.name).toBe('control_structure');
+    expect(toolSchema.inputSchema.required).toContain('image');
+    expect(toolSchema.inputSchema.required).toContain('prompt');
+  });
+});

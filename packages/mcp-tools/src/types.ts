@@ -48,4 +48,3 @@ export type McpContent = McpTextContent | McpImageContent;
 export interface McpToolResponse {
   content: McpContent[];
 }
-

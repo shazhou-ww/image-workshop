@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ConfigManager, ConfigKeys } from './index';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ConfigKeys, ConfigManager } from './index';
 
 describe('ConfigManager', () => {
   const originalEnv = process.env;
@@ -38,9 +38,9 @@ describe('ConfigManager', () => {
     it('should throw when required value is not found', async () => {
       const manager = new ConfigManager({ enableCaching: false });
 
-      await expect(
-        manager.getConfig('NON_EXISTENT_KEY', { required: true })
-      ).rejects.toThrow('Required configuration not found');
+      await expect(manager.getConfig('NON_EXISTENT_KEY', { required: true })).rejects.toThrow(
+        'Required configuration not found'
+      );
     });
 
     it('should prioritize env var over default value', async () => {
@@ -73,7 +73,7 @@ describe('ConfigManager', () => {
       process.env.TEST_KEY = 'initial-value';
 
       const manager = new ConfigManager({ enableCaching: true });
-      
+
       // First call
       const result1 = await manager.getConfig('TEST_KEY');
       expect(result1.value).toBe('initial-value');
@@ -95,7 +95,7 @@ describe('ConfigManager', () => {
       process.env.TEST_KEY = 'initial-value';
 
       const manager = new ConfigManager({ enableCaching: false });
-      
+
       // First call
       const result1 = await manager.getConfig('TEST_KEY');
       expect(result1.value).toBe('initial-value');
@@ -122,4 +122,3 @@ describe('ConfigManager', () => {
     });
   });
 });
-

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { APIGatewayProxyEvent, Context } from 'aws-lambda';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { handler, mcpToolSchema } from './index';
 
 // Mock the aws-config module
@@ -169,7 +169,7 @@ describe('tool-txt2img-stable-diffusion', () => {
     });
 
     it('should have style_preset enum with valid values', () => {
-      const stylePreset = mcpToolSchema.inputSchema.properties.style_preset;
+      const stylePreset = mcpToolSchema.inputSchema.properties.style_preset as { enum?: string[] };
       expect(stylePreset.enum).toBeDefined();
       expect(stylePreset.enum).toContain('photographic');
       expect(stylePreset.enum).toContain('anime');
@@ -177,4 +177,3 @@ describe('tool-txt2img-stable-diffusion', () => {
     });
   });
 });
-

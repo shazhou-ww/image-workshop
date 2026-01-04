@@ -1,11 +1,11 @@
-import type {
-  APIGatewayProxyEvent,
-  APIGatewayProxyResult,
-  Context,
-} from 'aws-lambda';
-import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
+import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 import { getValue } from '@image-workshop/aws-config';
-import { TOOL_REGISTRY, type McpToolConfig, type McpToolDefinition } from '@image-workshop/mcp-tools';
+import {
+  type McpToolConfig,
+  type McpToolDefinition,
+  TOOL_REGISTRY,
+} from '@image-workshop/mcp-tools';
+import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 
 // ============================================================================
 // MCP Protocol Types (JSON-RPC 2.0 based)
@@ -66,7 +66,11 @@ function getLambdaClient(region: string): LambdaClient {
 /**
  * Handle initialize request
  */
-function handleInitialize(): { protocolVersion: string; capabilities: McpCapabilities; serverInfo: McpServerInfo } {
+function handleInitialize(): {
+  protocolVersion: string;
+  capabilities: McpCapabilities;
+  serverInfo: McpServerInfo;
+} {
   return {
     protocolVersion: '2025-06-18',
     capabilities: SERVER_CAPABILITIES,
@@ -152,7 +156,9 @@ async function invokeToolViaLambda(
   const response = await client.send(command);
 
   if (response.FunctionError) {
-    const errorPayload = response.Payload ? new TextDecoder().decode(response.Payload) : 'Unknown error';
+    const errorPayload = response.Payload
+      ? new TextDecoder().decode(response.Payload)
+      : 'Unknown error';
     console.error(`Lambda error: ${errorPayload}`);
     throw new McpError(-32603, `Tool execution failed: ${errorPayload}`);
   }
@@ -192,9 +198,9 @@ async function handleToolsCall(
     // Check if running in local development mode
     // LOCAL_API_BASE_URL should be set to SAM local URL, e.g., "http://host.docker.internal:3000"
     const localBaseUrl = process.env.LOCAL_API_BASE_URL;
-    
+
     let toolResult: unknown;
-    
+
     if (localBaseUrl) {
       // Local development: call via HTTP
       toolResult = await invokeToolViaHttp(tool, params.arguments || {}, localBaseUrl);
@@ -205,7 +211,7 @@ async function handleToolsCall(
 
     // Format response for MCP
     const result = toolResult as Record<string, unknown>;
-    
+
     // If the result contains an image, return it as an image content
     if (result.image && result.mime_type) {
       return {
@@ -217,11 +223,15 @@ async function handleToolsCall(
           },
           {
             type: 'text',
-            text: JSON.stringify({
-              seed: result.seed,
-              finish_reason: result.finish_reason,
-              model: result.model,
-            }, null, 2),
+            text: JSON.stringify(
+              {
+                seed: result.seed,
+                finish_reason: result.finish_reason,
+                model: result.model,
+              },
+              null,
+              2
+            ),
           },
         ],
       };
@@ -241,7 +251,10 @@ async function handleToolsCall(
       throw error;
     }
     console.error(`Tool invocation error:`, error);
-    throw new McpError(-32603, `Internal error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new McpError(
+      -32603,
+      `Internal error: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
@@ -323,9 +336,10 @@ async function handleMcpRequest(request: JsonRpcRequest, region: string): Promis
       result,
     };
   } catch (error) {
-    const mcpError = error instanceof McpError
-      ? error
-      : new McpError(-32603, error instanceof Error ? error.message : 'Internal error');
+    const mcpError =
+      error instanceof McpError
+        ? error
+        : new McpError(-32603, error instanceof Error ? error.message : 'Internal error');
 
     return {
       jsonrpc: '2.0',
@@ -471,4 +485,3 @@ export const handler = async (
  * Export tool registry for external use
  */
 export { TOOL_REGISTRY, SERVER_INFO };
-

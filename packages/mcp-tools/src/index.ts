@@ -6,19 +6,32 @@
  * - tool-* (Lambda functions): imports individual tool schemas
  */
 
+// Registry
+export { getToolByName, getToolDefinitions, TOOL_REGISTRY } from './registry';
+// Individual tool definitions (for tool Lambda functions)
+export {
+  // Control Tools
+  controlSketch,
+  controlStructure,
+  controlStyle,
+  // Edit Tools
+  editErase,
+  editInpaint,
+  editOutpaint,
+  editRemoveBackground,
+  editSearchAndRecolor,
+  editSearchAndReplace,
+  // Style Transfer
+  styleTransfer,
+  // Text-to-Image
+  txt2imgStableDiffusion,
+} from './tools';
 // Types
 export type {
-  McpToolDefinition,
-  McpToolConfig,
-  McpTextContent,
-  McpImageContent,
   McpContent,
+  McpImageContent,
+  McpTextContent,
+  McpToolConfig,
+  McpToolDefinition,
   McpToolResponse,
 } from './types';
-
-// Registry
-export { TOOL_REGISTRY, getToolByName, getToolDefinitions } from './registry';
-
-// Individual tool definitions (for tool Lambda functions)
-export { txt2imgStableDiffusion } from './tools';
-

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import { handler, TOOL_REGISTRY, SERVER_INFO } from './index';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { handler, SERVER_INFO, TOOL_REGISTRY } from './index';
 
 // Mock the aws-config module
 vi.mock('@image-workshop/aws-config', () => ({
@@ -259,4 +259,3 @@ describe('image-workshop-mcp', () => {
     });
   });
 });
-

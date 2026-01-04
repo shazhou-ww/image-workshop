@@ -1,8 +1,5 @@
-import {
-  SecretsManagerClient,
-  GetSecretValueCommand,
-} from '@aws-sdk/client-secrets-manager';
-import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
+import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
+import { GetParameterCommand, SSMClient } from '@aws-sdk/client-ssm';
 
 /**
  * Configuration source type
@@ -19,12 +16,12 @@ export interface ConfigResult {
 
 /**
  * AWS Configuration Manager
- * 
+ *
  * Reads configuration values with the following priority:
  * 1. Environment variables (highest priority)
  * 2. AWS Secrets Manager (for secrets like API keys)
  * 3. AWS SSM Parameter Store (for configuration values)
- * 
+ *
  * This allows local development to use .env files while production
  * uses AWS services for secure configuration management.
  */
@@ -93,9 +90,9 @@ export class ConfigManager {
 
   /**
    * Get a configuration value with fallback chain
-   * 
+   *
    * Priority: ENV -> Secrets Manager -> Parameter Store -> default
-   * 
+   *
    * @param envKey - Environment variable name
    * @param options - Optional configuration
    * @param options.secretId - AWS Secrets Manager secret ID
@@ -113,7 +110,7 @@ export class ConfigManager {
     }
   ): Promise<ConfigResult> {
     const cacheKey = `${envKey}:${options?.secretId || ''}:${options?.parameterId || ''}`;
-    
+
     // Check cache first
     if (this.enableCaching && this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey)!;
@@ -136,9 +133,10 @@ export class ConfigManager {
         // Handle JSON secrets - try to extract by key
         try {
           const parsed = JSON.parse(secretValue);
-          const value = typeof parsed === 'object' && parsed !== null
-            ? (parsed[envKey] || secretValue)
-            : secretValue;
+          const value =
+            typeof parsed === 'object' && parsed !== null
+              ? parsed[envKey] || secretValue
+              : secretValue;
           const result: ConfigResult = { value: String(value), source: 'secrets-manager' };
           if (this.enableCaching) {
             this.cache.set(cacheKey, result);
@@ -180,9 +178,9 @@ export class ConfigManager {
     if (options?.required) {
       throw new Error(
         `Required configuration not found: ${envKey}. ` +
-        `Checked: ENV[${envKey}]` +
-        (options.secretId ? `, SecretsManager[${options.secretId}]` : '') +
-        (options.parameterId ? `, ParameterStore[${options.parameterId}]` : '')
+          `Checked: ENV[${envKey}]` +
+          (options.secretId ? `, SecretsManager[${options.secretId}]` : '') +
+          (options.parameterId ? `, ParameterStore[${options.parameterId}]` : '')
       );
     }
 
@@ -220,7 +218,10 @@ let defaultInstance: ConfigManager | null = null;
 /**
  * Get the default ConfigManager instance
  */
-export function getConfigManager(options?: { region?: string; enableCaching?: boolean }): ConfigManager {
+export function getConfigManager(options?: {
+  region?: string;
+  enableCaching?: boolean;
+}): ConfigManager {
   if (!defaultInstance) {
     defaultInstance = new ConfigManager(options);
   }
@@ -270,7 +271,7 @@ export const ConfigKeys = {
     envKey: 'HUGGINGFACE_API_KEY',
     secretId: 'image-workshop/huggingface-api-key',
   },
-  
+
   // Endpoints (Parameters)
   SAGEMAKER_ENDPOINT_NAME: {
     envKey: 'SAGEMAKER_ENDPOINT_NAME',
@@ -287,7 +288,10 @@ export type ConfigKeyName = keyof typeof ConfigKeys;
 /**
  * Get a well-known configuration value
  */
-export async function getKnownConfig(key: ConfigKeyName, options?: { required?: boolean }): Promise<string> {
+export async function getKnownConfig(
+  key: ConfigKeyName,
+  options?: { required?: boolean }
+): Promise<string> {
   const config = ConfigKeys[key];
   return getConfigManager().getValue(config.envKey, {
     secretId: 'secretId' in config ? config.secretId : undefined,
@@ -295,4 +299,3 @@ export async function getKnownConfig(key: ConfigKeyName, options?: { required?: 
     required: options?.required,
   });
 }
-

@@ -1,5 +1,5 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { InferenceClient } from '@huggingface/inference';
+import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 
 /**
  * Request body for text-region-selector
@@ -41,31 +41,110 @@ const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
 
 // COCO dataset labels that DETR can detect
 const COCO_LABELS = [
-  'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck',
-  'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench',
-  'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra',
-  'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
-  'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove',
-  'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
-  'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange',
-  'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
-  'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse',
-  'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink',
-  'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier',
-  'toothbrush'
+  'person',
+  'bicycle',
+  'car',
+  'motorcycle',
+  'airplane',
+  'bus',
+  'train',
+  'truck',
+  'boat',
+  'traffic light',
+  'fire hydrant',
+  'stop sign',
+  'parking meter',
+  'bench',
+  'bird',
+  'cat',
+  'dog',
+  'horse',
+  'sheep',
+  'cow',
+  'elephant',
+  'bear',
+  'zebra',
+  'giraffe',
+  'backpack',
+  'umbrella',
+  'handbag',
+  'tie',
+  'suitcase',
+  'frisbee',
+  'skis',
+  'snowboard',
+  'sports ball',
+  'kite',
+  'baseball bat',
+  'baseball glove',
+  'skateboard',
+  'surfboard',
+  'tennis racket',
+  'bottle',
+  'wine glass',
+  'cup',
+  'fork',
+  'knife',
+  'spoon',
+  'bowl',
+  'banana',
+  'apple',
+  'sandwich',
+  'orange',
+  'broccoli',
+  'carrot',
+  'hot dog',
+  'pizza',
+  'donut',
+  'cake',
+  'chair',
+  'couch',
+  'potted plant',
+  'bed',
+  'dining table',
+  'toilet',
+  'tv',
+  'laptop',
+  'mouse',
+  'remote',
+  'keyboard',
+  'cell phone',
+  'microwave',
+  'oven',
+  'toaster',
+  'sink',
+  'refrigerator',
+  'book',
+  'clock',
+  'vase',
+  'scissors',
+  'teddy bear',
+  'hair drier',
+  'toothbrush',
 ];
 
 // Mapping of common query terms to COCO labels
 const QUERY_MAPPINGS: Record<string, string[]> = {
-  'ship': ['boat'],
+  ship: ['boat'],
   'sailing ship': ['boat'],
-  'sailboat': ['boat'],
-  '帆船': ['boat'],
-  '船': ['boat'],
-  'vehicle': ['car', 'truck', 'bus', 'motorcycle', 'bicycle', 'train', 'airplane', 'boat'],
-  'animal': ['bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe'],
-  'furniture': ['chair', 'couch', 'bed', 'dining table'],
-  'food': ['banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake'],
+  sailboat: ['boat'],
+  帆船: ['boat'],
+  船: ['boat'],
+  vehicle: ['car', 'truck', 'bus', 'motorcycle', 'bicycle', 'train', 'airplane', 'boat'],
+  animal: ['bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe'],
+  furniture: ['chair', 'couch', 'bed', 'dining table'],
+  food: [
+    'banana',
+    'apple',
+    'sandwich',
+    'orange',
+    'broccoli',
+    'carrot',
+    'hot dog',
+    'pizza',
+    'donut',
+    'cake',
+  ],
 };
 
 /**
@@ -199,9 +278,10 @@ export const handler = async (
       .sort((a, b) => b.score - a.score);
 
     // Filter by matching labels (if any)
-    const regions: DetectedRegion[] = matchingLabels.length > 0
-      ? allDetections.filter((d) => matchingLabels.includes(d.label.toLowerCase()))
-      : allDetections;
+    const regions: DetectedRegion[] =
+      matchingLabels.length > 0
+        ? allDetections.filter((d) => matchingLabels.includes(d.label.toLowerCase()))
+        : allDetections;
 
     console.log(`Found ${regions.length} regions matching query "${query}"`);
 

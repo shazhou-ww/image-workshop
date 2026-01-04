@@ -233,4 +233,3 @@ if (type === 'function') {
   console.log(`  bun install`);
   console.log(`  bun run dev`);
 }
-

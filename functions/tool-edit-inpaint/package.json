@@ -1,0 +1,22 @@
+{
+  "name": "@image-workshop/tool-edit-inpaint",
+  "version": "1.0.0",
+  "description": "MCP Tool: Inpaint masked regions using Stability AI",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js --external:\"@aws-sdk/*\" --minify --sourcemap",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@image-workshop/aws-config": "workspace:*",
+    "@image-workshop/mcp-tools": "workspace:*",
+    "@image-workshop/stability-api": "workspace:*"
+  },
+  "devDependencies": {}
+}
+

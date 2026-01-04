@@ -1,6 +1,6 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { getKnownConfig, getValue } from '@image-workshop/aws-config';
 import { txt2imgStableDiffusion } from '@image-workshop/mcp-tools';
+import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 
 /**
  * Request body for txt2img generation
@@ -76,13 +76,23 @@ function parseRequest(body: string | null): Txt2ImgRequest {
 
   // Validate dimensions (must be multiples of 64)
   if (parsed.width !== undefined) {
-    if (typeof parsed.width !== 'number' || parsed.width < 512 || parsed.width > 2048 || parsed.width % 64 !== 0) {
+    if (
+      typeof parsed.width !== 'number' ||
+      parsed.width < 512 ||
+      parsed.width > 2048 ||
+      parsed.width % 64 !== 0
+    ) {
       throw new Error('width must be a number between 512 and 2048, and a multiple of 64');
     }
   }
 
   if (parsed.height !== undefined) {
-    if (typeof parsed.height !== 'number' || parsed.height < 512 || parsed.height > 2048 || parsed.height % 64 !== 0) {
+    if (
+      typeof parsed.height !== 'number' ||
+      parsed.height < 512 ||
+      parsed.height > 2048 ||
+      parsed.height % 64 !== 0
+    ) {
       throw new Error('height must be a number between 512 and 2048, and a multiple of 64');
     }
   }
@@ -239,7 +249,9 @@ export const handler = async (
     // Generate image
     const result = await generateImage(request, apiKey, model);
 
-    console.log(`Generation complete. Seed: ${result.seed}, Finish reason: ${result.finish_reason}`);
+    console.log(
+      `Generation complete. Seed: ${result.seed}, Finish reason: ${result.finish_reason}`
+    );
 
     return {
       statusCode: 200,
@@ -250,8 +262,12 @@ export const handler = async (
     console.error('Error:', error);
 
     const message = error instanceof Error ? error.message : 'Unknown error';
-    const statusCode = message.includes('required') || message.includes('must be') ? 400 : 
-                       message.includes('API error') ? 502 : 500;
+    const statusCode =
+      message.includes('required') || message.includes('must be')
+        ? 400
+        : message.includes('API error')
+          ? 502
+          : 500;
 
     return {
       statusCode,
@@ -268,4 +284,3 @@ export const handler = async (
  * Export the tool schema for MCP server registration
  */
 export { toolSchema as mcpToolSchema };
-

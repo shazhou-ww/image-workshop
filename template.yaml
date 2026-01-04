@@ -48,6 +48,16 @@ Resources:
                 - lambda:InvokeFunction
               Resource:
                 - !GetAtt ToolTxt2imgStableDiffusionFunction.Arn
+                - !GetAtt ToolEditEraseFunction.Arn
+                - !GetAtt ToolEditInpaintFunction.Arn
+                - !GetAtt ToolEditOutpaintFunction.Arn
+                - !GetAtt ToolEditSearchAndReplaceFunction.Arn
+                - !GetAtt ToolEditSearchAndRecolorFunction.Arn
+                - !GetAtt ToolEditRemoveBackgroundFunction.Arn
+                - !GetAtt ToolControlSketchFunction.Arn
+                - !GetAtt ToolControlStructureFunction.Arn
+                - !GetAtt ToolControlStyleFunction.Arn
+                - !GetAtt ToolStyleTransferFunction.Arn
         # Allow reading secrets and parameters
         - Version: '2012-10-17'
           Statement:
@@ -114,6 +124,346 @@ Resources:
           Type: Api
           Properties:
             Path: /tools/txt2img-stable-diffusion
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Edit - Erase (Stability AI)
+  # ==========================================================================
+  ToolEditEraseFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-edit-erase/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Erase objects from images using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_API_KEY: ""
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/edit-erase
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Edit - Inpaint (Stability AI)
+  # ==========================================================================
+  ToolEditInpaintFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-edit-inpaint/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Inpaint masked regions using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_API_KEY: ""
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/edit-inpaint
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Edit - Outpaint (Stability AI)
+  # ==========================================================================
+  ToolEditOutpaintFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-edit-outpaint/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Extend images beyond boundaries using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_API_KEY: ""
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/edit-outpaint
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Edit - Search and Replace (Stability AI)
+  # ==========================================================================
+  ToolEditSearchAndReplaceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-edit-search-and-replace/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Search and replace objects in images using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_API_KEY: ""
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/edit-search-and-replace
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Edit - Search and Recolor (Stability AI)
+  # ==========================================================================
+  ToolEditSearchAndRecolorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-edit-search-and-recolor/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Search and recolor objects in images using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_API_KEY: ""
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/edit-search-and-recolor
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Edit - Remove Background (Stability AI)
+  # ==========================================================================
+  ToolEditRemoveBackgroundFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-edit-remove-background/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Remove background from images using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_API_KEY: ""
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/edit-remove-background
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Control - Sketch (Stability AI)
+  # ==========================================================================
+  ToolControlSketchFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-control-sketch/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Generate images from sketches using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_API_KEY: ""
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/control-sketch
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Control - Structure (Stability AI)
+  # ==========================================================================
+  ToolControlStructureFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-control-structure/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Generate images following structure using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_API_KEY: ""
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/control-structure
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Control - Style (Stability AI)
+  # ==========================================================================
+  ToolControlStyleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-control-style/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Generate images in reference style using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_API_KEY: ""
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/control-style
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Style Transfer (Stability AI)
+  # ==========================================================================
+  ToolStyleTransferFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-style-transfer/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Transfer style between images using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_API_KEY: ""
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/style-transfer
             Method: POST
 
   # ==========================================================================

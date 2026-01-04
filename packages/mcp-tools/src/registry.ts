@@ -1,5 +1,17 @@
+import {
+  controlSketch,
+  controlStructure,
+  controlStyle,
+  editErase,
+  editInpaint,
+  editOutpaint,
+  editRemoveBackground,
+  editSearchAndRecolor,
+  editSearchAndReplace,
+  styleTransfer,
+  txt2imgStableDiffusion,
+} from './tools';
 import type { McpToolConfig } from './types';
-import { txt2imgStableDiffusion } from './tools';
 
 /**
  * Tool Registry
@@ -15,17 +27,65 @@ import { txt2imgStableDiffusion } from './tools';
  * 3. Add an entry to this registry with the Lambda and API path
  */
 export const TOOL_REGISTRY: McpToolConfig[] = [
+  // Text-to-Image
   {
     ...txt2imgStableDiffusion,
     lambdaFunction: 'ToolTxt2imgStableDiffusionFunction',
     apiPath: '/tools/txt2img-stable-diffusion',
   },
-  // Future tools:
-  // {
-  //   ...img2imgStableDiffusion,
-  //   lambdaFunction: 'ToolImg2imgStableDiffusionFunction',
-  //   apiPath: '/tools/img2img-stable-diffusion',
-  // },
+  // Edit Tools
+  {
+    ...editErase,
+    lambdaFunction: 'ToolEditEraseFunction',
+    apiPath: '/tools/edit-erase',
+  },
+  {
+    ...editInpaint,
+    lambdaFunction: 'ToolEditInpaintFunction',
+    apiPath: '/tools/edit-inpaint',
+  },
+  {
+    ...editOutpaint,
+    lambdaFunction: 'ToolEditOutpaintFunction',
+    apiPath: '/tools/edit-outpaint',
+  },
+  {
+    ...editSearchAndReplace,
+    lambdaFunction: 'ToolEditSearchAndReplaceFunction',
+    apiPath: '/tools/edit-search-and-replace',
+  },
+  {
+    ...editSearchAndRecolor,
+    lambdaFunction: 'ToolEditSearchAndRecolorFunction',
+    apiPath: '/tools/edit-search-and-recolor',
+  },
+  {
+    ...editRemoveBackground,
+    lambdaFunction: 'ToolEditRemoveBackgroundFunction',
+    apiPath: '/tools/edit-remove-background',
+  },
+  // Control Tools
+  {
+    ...controlSketch,
+    lambdaFunction: 'ToolControlSketchFunction',
+    apiPath: '/tools/control-sketch',
+  },
+  {
+    ...controlStructure,
+    lambdaFunction: 'ToolControlStructureFunction',
+    apiPath: '/tools/control-structure',
+  },
+  {
+    ...controlStyle,
+    lambdaFunction: 'ToolControlStyleFunction',
+    apiPath: '/tools/control-style',
+  },
+  // Style Transfer
+  {
+    ...styleTransfer,
+    lambdaFunction: 'ToolStyleTransferFunction',
+    apiPath: '/tools/style-transfer',
+  },
 ];
 
 /**
@@ -46,4 +106,3 @@ export function getToolDefinitions() {
     inputSchema,
   }));
 }
-

@@ -51,7 +51,8 @@ bun run init  # 如果 bun create 没有自动运行 init
 bun install
 ```
 
-**注意**: 
+**注意**:
+
 - 从 npm 使用时，`init.ts` 脚本会在安装后自动运行（通过 `bun-create.postinstall`）
 - 从 GitHub 使用时，可能需要手动运行 `bun run init`
 - `init.ts` 脚本会将所有模板占位符替换为实际项目名称
@@ -108,19 +109,19 @@ bun run create:app <app-name>
 bun run build:functions
 ```
 
-2. 使用 SAM CLI 本地启动 API：
+1. 使用 SAM CLI 本地启动 API：
 
 ```bash
 bun run sam:local
 ```
 
-3. 测试特定函数：
+1. 测试特定函数：
 
 ```bash
 bun run sam:invoke <FunctionName>
 ```
 
-4. 或者直接用 bun 运行 TypeScript 进行开发：
+1. 或者直接用 bun 运行 TypeScript 进行开发：
 
 ```bash
 bun run functions/<function-name>/src/index.ts
@@ -309,4 +310,3 @@ sam local invoke <FunctionName> --debug-port 5858
 ## 许可证
 
 [添加许可证信息]
-

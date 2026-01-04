@@ -3,10 +3,18 @@
  * Add new tools here as they are created
  */
 
+// Control Tools
+export { controlSketch } from './control-sketch';
+export { controlStructure } from './control-structure';
+export { controlStyle } from './control-style';
+// Edit Tools
+export { editErase } from './edit-erase';
+export { editInpaint } from './edit-inpaint';
+export { editOutpaint } from './edit-outpaint';
+export { editRemoveBackground } from './edit-remove-background';
+export { editSearchAndRecolor } from './edit-search-and-recolor';
+export { editSearchAndReplace } from './edit-search-and-replace';
+// Style Transfer
+export { styleTransfer } from './style-transfer';
+// Text-to-Image
 export { txt2imgStableDiffusion } from './txt2img-stable-diffusion';
-
-// Future tools:
-// export { img2imgStableDiffusion } from './img2img-stable-diffusion';
-// export { inpaintStableDiffusion } from './inpaint-stable-diffusion';
-// export { upscaleStableDiffusion } from './upscale-stable-diffusion';
-

@@ -1,8 +1,8 @@
-import { handler } from './index';
-import type { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import { expect, it, describe, vi, beforeAll } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import type { APIGatewayProxyEvent, Context } from 'aws-lambda';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { handler } from './index';
 
 // Mock console to prevent cluttering test output
 vi.spyOn(console, 'error').mockImplementation(() => {});

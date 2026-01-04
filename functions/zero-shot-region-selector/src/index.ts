@@ -1,5 +1,5 @@
+import { InvokeEndpointCommand, SageMakerRuntimeClient } from '@aws-sdk/client-sagemaker-runtime';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { SageMakerRuntimeClient, InvokeEndpointCommand } from '@aws-sdk/client-sagemaker-runtime';
 
 /**
  * Request body for zero-shot-region-selector
@@ -59,7 +59,8 @@ interface ZeroShotDetectionResult {
 }
 
 // SageMaker endpoint configuration
-const SAGEMAKER_ENDPOINT_NAME = process.env.SAGEMAKER_ENDPOINT_NAME || 'owlv2-base-patch16-ensemble';
+const SAGEMAKER_ENDPOINT_NAME =
+  process.env.SAGEMAKER_ENDPOINT_NAME || 'owlv2-base-patch16-ensemble';
 const SAGEMAKER_REGION = process.env.SAGEMAKER_REGION || 'us-east-1';
 
 // Create SageMaker Runtime client
@@ -113,9 +114,11 @@ function cleanBase64(base64: string): string {
  */
 async function callSageMakerEndpoint(
   base64Image: string,
-  labels: string[],
+  labels: string[]
 ): Promise<ZeroShotDetectionResult[]> {
-  console.log(`Calling SageMaker endpoint: ${SAGEMAKER_ENDPOINT_NAME} with ${labels.length} labels...`);
+  console.log(
+    `Calling SageMaker endpoint: ${SAGEMAKER_ENDPOINT_NAME} with ${labels.length} labels...`
+  );
 
   // Clean base64 data
   const cleanedBase64 = cleanBase64(base64Image);
@@ -171,10 +174,7 @@ async function callSageMakerEndpoint(
 /**
  * Transform API results to our response format
  */
-function transformResults(
-  results: ZeroShotDetectionResult[],
-  threshold: number
-): DetectedRegion[] {
+function transformResults(results: ZeroShotDetectionResult[], threshold: number): DetectedRegion[] {
   return results
     .filter((r) => r.score >= threshold)
     .map((r) => ({
@@ -248,8 +248,12 @@ export const handler = async (
     console.error('Error:', error);
 
     const message = error instanceof Error ? error.message : 'Unknown error';
-    const statusCode = message.includes('required') || message.includes('must be') ? 400 : 
-                       message.includes('loading') ? 503 : 500;
+    const statusCode =
+      message.includes('required') || message.includes('must be')
+        ? 400
+        : message.includes('loading')
+          ? 503
+          : 500;
 
     return {
       statusCode,
