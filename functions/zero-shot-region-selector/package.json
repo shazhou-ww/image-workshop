@@ -1,7 +1,7 @@
 {
   "name": "@myorg/function-zero-shot-region-selector",
   "version": "1.0.0",
-  "description": "Lambda function: Zero-shot object detection using custom Inference Endpoints (OWL-ViT, Grounding DINO, etc.)",
+  "description": "Lambda function: Zero-shot object detection using SageMaker or HuggingFace Inference Endpoints",
   "main": "src/index.ts",
   "scripts": {
     "test": "vitest run",
@@ -11,7 +11,9 @@
     "build": "esbuild src/index.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.js --external:\"@aws-sdk/*\" --minify --sourcemap",
     "clean": "rimraf dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@aws-sdk/client-sagemaker-runtime": "^3.758.0"
+  },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145"
   }

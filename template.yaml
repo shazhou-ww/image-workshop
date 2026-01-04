@@ -48,11 +48,19 @@ Resources:
       Runtime: nodejs24.x
       Timeout: 120
       MemorySize: 1024
-      Description: Zero-shot object detection using Grounding DINO or OWL-ViT
+      Description: Zero-shot object detection using OWLv2 on SageMaker
       Environment:
         Variables:
           NODE_ENV: ${Env:NODE_ENV,prod}
-          HUGGINGFACE_API_KEY: ${Env:HUGGINGFACE_API_KEY}
+          SAGEMAKER_ENDPOINT_NAME: owlv2-base-patch16-ensemble
+          SAGEMAKER_REGION: us-east-1
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - sagemaker:InvokeEndpoint
+              Resource: !Sub arn:aws:sagemaker:us-east-1:${AWS::AccountId}:endpoint/owlv2-base-patch16-ensemble
       Events:
         Api:
           Type: Api

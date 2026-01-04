@@ -1,4 +1,5 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
+import { SageMakerRuntimeClient, InvokeEndpointCommand } from '@aws-sdk/client-sagemaker-runtime';
 
 /**
  * Request body for zero-shot-region-selector
@@ -10,16 +11,6 @@ interface RequestBody {
   labels: string[];
   /** Confidence threshold (0-1), default 0.1 */
   threshold?: number;
-  /** 
-   * Custom Inference Endpoint URL for zero-shot object detection.
-   * Required since HF Inference API doesn't support this task natively.
-   * Deploy models like:
-   *   - google/owlvit-base-patch32
-   *   - IDEA-Research/grounding-dino-tiny
-   * to an Inference Endpoint and provide the URL.
-   * @example "https://xxx.endpoints.huggingface.cloud"
-   */
-  endpointUrl?: string;
 }
 
 /**
@@ -55,7 +46,7 @@ interface ResponseBody {
   /** Labels that were searched for */
   searchedLabels: string[];
   /** Endpoint used for detection */
-  endpoint?: string;
+  endpoint: string;
 }
 
 /**
@@ -67,7 +58,12 @@ interface ZeroShotDetectionResult {
   box: BoundingBox;
 }
 
-const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
+// SageMaker endpoint configuration
+const SAGEMAKER_ENDPOINT_NAME = process.env.SAGEMAKER_ENDPOINT_NAME || 'owlv2-base-patch16-ensemble';
+const SAGEMAKER_REGION = process.env.SAGEMAKER_REGION || 'us-east-1';
+
+// Create SageMaker Runtime client
+const sagemakerClient = new SageMakerRuntimeClient({ region: SAGEMAKER_REGION });
 
 /**
  * Parse and validate the request body
@@ -98,115 +94,77 @@ function parseRequestBody(body: string | null): RequestBody {
     throw new Error('threshold must be a number between 0 and 1');
   }
 
-  if (!parsed.endpointUrl || typeof parsed.endpointUrl !== 'string') {
-    throw new Error(
-      'endpointUrl is required. HuggingFace Inference API does not natively support zero-shot object detection. ' +
-      'Please deploy a model (e.g., google/owlvit-base-patch32 or IDEA-Research/grounding-dino-tiny) ' +
-      'to a HuggingFace Inference Endpoint and provide the endpoint URL.'
-    );
-  }
-
   return {
     image: parsed.image,
     labels: parsed.labels.map((l: string) => l.trim()),
     threshold,
-    endpointUrl: parsed.endpointUrl,
   };
 }
 
 /**
- * Convert base64 string to Blob for the inference client
+ * Remove data URI prefix from base64 string if present
  */
-function base64ToBlob(base64: string, mimeType = 'image/jpeg'): Blob {
-  // Remove data URI prefix if present
-  const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
-  const binaryString = atob(base64Data);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return new Blob([bytes], { type: mimeType });
+function cleanBase64(base64: string): string {
+  return base64.replace(/^data:image\/\w+;base64,/, '');
 }
 
 /**
- * Call the zero-shot object detection endpoint
+ * Call SageMaker endpoint for zero-shot object detection
  */
-async function callZeroShotDetection(
-  imageBlob: Blob,
+async function callSageMakerEndpoint(
+  base64Image: string,
   labels: string[],
-  endpointUrl: string
 ): Promise<ZeroShotDetectionResult[]> {
-  console.log(`Calling endpoint: ${endpointUrl} with ${labels.length} labels...`);
+  console.log(`Calling SageMaker endpoint: ${SAGEMAKER_ENDPOINT_NAME} with ${labels.length} labels...`);
 
-  // Create form data with image and parameters
-  const formData = new FormData();
-  formData.append('image', imageBlob, 'image.jpg');
-  formData.append('candidate_labels', JSON.stringify(labels));
+  // Clean base64 data
+  const cleanedBase64 = cleanBase64(base64Image);
 
-  // Try sending as multipart form first
-  let response = await fetch(endpointUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
-    },
-    body: formData,
+  // Prepare the payload for OWLv2
+  // The expected format depends on your SageMaker model deployment
+  const payload = {
+    image: cleanedBase64,
+    candidate_labels: labels,
+  };
+
+  const command = new InvokeEndpointCommand({
+    EndpointName: SAGEMAKER_ENDPOINT_NAME,
+    ContentType: 'application/json',
+    Accept: 'application/json',
+    Body: JSON.stringify(payload),
   });
 
-  // If that fails, try JSON format
-  if (!response.ok && response.status === 415) {
-    console.log('Trying JSON format...');
-    const arrayBuffer = await imageBlob.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
-    
-    response = await fetch(endpointUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: {
-          image: base64,
-        },
-        parameters: {
-          candidate_labels: labels,
-        },
-      }),
-    });
+  const response = await sagemakerClient.send(command);
+
+  if (!response.Body) {
+    throw new Error('Empty response from SageMaker endpoint');
   }
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`API Error (${response.status}):`, errorText);
-    
-    // Handle model loading
-    if (response.status === 503) {
-      try {
-        const errorData = JSON.parse(errorText);
-        if (errorData.error?.includes('loading')) {
-          throw new Error(`Model is loading. Estimated time: ${errorData.estimated_time || 'unknown'}s. Please retry.`);
-        }
-      } catch (e) {
-        // Ignore JSON parse error
-      }
-    }
-    
-    throw new Error(`Endpoint API error: ${response.status} - ${errorText}`);
-  }
+  // Parse the response
+  const responseBody = new TextDecoder().decode(response.Body);
+  console.log('SageMaker Response:', responseBody.slice(0, 500));
 
-  const result: unknown = await response.json();
-  console.log('API Response:', JSON.stringify(result).slice(0, 500));
-  
+  const result: unknown = JSON.parse(responseBody);
+
   // Handle different response formats
   if (Array.isArray(result)) {
     return result;
   }
-  
+
+  // Some models return { predictions: [...] }
+  if (result && typeof result === 'object' && 'predictions' in result) {
+    const predictions = (result as { predictions: unknown }).predictions;
+    if (Array.isArray(predictions)) {
+      return predictions;
+    }
+  }
+
   // Some models return { error: "..." }
   if (result && typeof result === 'object' && 'error' in result) {
     throw new Error(`Model error: ${(result as { error: string }).error}`);
   }
 
+  console.warn('Unexpected response format, returning empty array');
   return [];
 }
 
@@ -258,24 +216,17 @@ export const handler = async (
   }
 
   try {
-    // Parse request first (to validate input before checking API key)
-    const { image, labels, threshold, endpointUrl } = parseRequestBody(event.body);
+    // Parse request
+    const { image, labels, threshold } = parseRequestBody(event.body);
 
-    // Validate API key
-    if (!HUGGINGFACE_API_KEY) {
-      throw new Error('HUGGINGFACE_API_KEY environment variable is not set');
-    }
-
-    console.log(`Processing with endpoint: ${endpointUrl}`);
+    console.log(`Processing with SageMaker endpoint: ${SAGEMAKER_ENDPOINT_NAME}`);
+    console.log(`Region: ${SAGEMAKER_REGION}`);
     console.log(`Labels: [${labels.join(', ')}]`);
     console.log(`Threshold: ${threshold}`);
 
-    // Convert base64 to Blob
-    const imageBlob = base64ToBlob(image);
-
-    // Call the zero-shot object detection endpoint
-    const detectionResults = await callZeroShotDetection(imageBlob, labels, endpointUrl!);
-    console.log(`Detection API returned ${detectionResults.length} raw results`);
+    // Call SageMaker endpoint
+    const detectionResults = await callSageMakerEndpoint(image, labels);
+    console.log(`SageMaker returned ${detectionResults.length} raw results`);
 
     // Transform and filter results
     const regions = transformResults(detectionResults, threshold!);
@@ -285,7 +236,7 @@ export const handler = async (
       regions,
       count: regions.length,
       searchedLabels: labels,
-      endpoint: endpointUrl,
+      endpoint: `sagemaker://${SAGEMAKER_REGION}/${SAGEMAKER_ENDPOINT_NAME}`,
     };
 
     return {
