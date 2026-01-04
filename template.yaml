@@ -21,6 +21,104 @@ Parameters:
       - prod
 
 Resources:
+  # ==========================================================================
+  # MCP Server - Routes tool calls to individual Lambda functions
+  # ==========================================================================
+  ImageWorkshopMcpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/image-workshop-mcp/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 300
+      MemorySize: 512
+      Description: MCP Server for Image Workshop - routes tool calls to Lambda functions
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          # For local development: set to SAM local URL (e.g., http://127.0.0.1:3000)
+          # In production, leave empty to use Lambda invoke
+          LOCAL_API_BASE_URL: ""
+      Policies:
+        # Allow invoking tool Lambda functions
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource:
+                - !GetAtt ToolTxt2imgStableDiffusionFunction.Arn
+        # Allow reading secrets and parameters
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      # Function URL for direct MCP access
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - "*"
+          AllowMethods:
+            - POST
+          AllowHeaders:
+            - Content-Type
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /mcp
+            Method: POST
+
+  # ==========================================================================
+  # Tool: Text-to-Image with Stable Diffusion (Stability AI)
+  # ==========================================================================
+  ToolTxt2imgStableDiffusionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/tool-txt2img-stable-diffusion/dist
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Timeout: 120
+      MemorySize: 1024
+      Description: MCP Tool - Text-to-Image generation using Stability AI
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Environment
+          STABILITY_MODEL: stable-diffusion-xl-1024-v1-0
+          # For local development, set via env.json; in production, read from Secrets Manager
+          STABILITY_API_KEY: ""
+      Policies:
+        # Allow reading secrets (API keys)
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+        # Allow reading parameters (configuration)
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /tools/txt2img-stable-diffusion
+            Method: POST
+
+  # ==========================================================================
+  # Existing Functions
+  # ==========================================================================
   TextRegionSelectorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -31,7 +129,7 @@ Resources:
       MemorySize: 1024
       Environment:
         Variables:
-          NODE_ENV: ${Env:NODE_ENV,prod}
+          NODE_ENV: !Ref Environment
           HUGGINGFACE_API_KEY: ${Env:HUGGINGFACE_API_KEY}
       Events:
         Api:
@@ -51,7 +149,7 @@ Resources:
       Description: Zero-shot object detection using OWLv2 on SageMaker
       Environment:
         Variables:
-          NODE_ENV: ${Env:NODE_ENV,prod}
+          NODE_ENV: !Ref Environment
           SAGEMAKER_ENDPOINT_NAME: owlv2-base-patch16-ensemble
           SAGEMAKER_REGION: us-east-1
       Policies:
@@ -67,8 +165,16 @@ Resources:
           Properties:
             Path: /zero-shot-region-selector
             Method: POST
+
 Outputs:
   ApiGatewayApi:
     Description: API Gateway endpoint URL
     Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
 
+  McpServerUrl:
+    Description: MCP Server Function URL (for direct MCP access)
+    Value: !GetAtt ImageWorkshopMcpFunctionUrl.FunctionUrl
+
+  McpServerApiUrl:
+    Description: MCP Server API Gateway URL
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mcp

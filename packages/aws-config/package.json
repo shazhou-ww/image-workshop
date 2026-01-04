@@ -1,0 +1,24 @@
+{
+  "name": "@image-workshop/aws-config",
+  "version": "1.0.0",
+  "description": "AWS configuration utilities for Lambda functions - reads from ENV, Secrets Manager, or Parameter Store",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "build": "tsc",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.700.0",
+    "@aws-sdk/client-ssm": "^3.700.0"
+  },
+  "devDependencies": {}
+}
+
