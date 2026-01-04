@@ -26,7 +26,8 @@
     "lint:fix": "bun run lint:ts:fix && bun run lint:md:fix",
     "build": "turbo run build",
     "build:functions": "turbo run build --filter='./functions/*'",
-    "sam:build": "bun run build:functions && sam build",
+    "build:template": "bun run scripts/build-template.ts",
+    "sam:build": "bun run build:template && bun run build:functions && sam build",
     "sam:local": "sam local start-api --env-vars env.json",
     "sam:invoke": "sam local invoke",
     "clean": "turbo run clean && rimraf dist build .aws-sam .turbo"

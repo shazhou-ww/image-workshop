@@ -1,0 +1,29 @@
+# Zero-Shot Region Selector (SageMaker OWLv2)
+ZeroShotRegionSelectorFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    CodeUri: functions/zero-shot-region-selector/dist
+    Handler: index.handler
+    Runtime: nodejs24.x
+    Timeout: 120
+    MemorySize: 1024
+    Description: Zero-shot object detection using OWLv2 on SageMaker
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        SAGEMAKER_ENDPOINT_NAME: owlv2-base-patch16-ensemble
+        SAGEMAKER_REGION: us-east-1
+    Policies:
+      - Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - sagemaker:InvokeEndpoint
+            Resource: !Sub arn:aws:sagemaker:us-east-1:${AWS::AccountId}:endpoint/owlv2-base-patch16-ensemble
+    Events:
+      Api:
+        Type: Api
+        Properties:
+          Path: /zero-shot-region-selector
+          Method: POST
+

@@ -1,0 +1,32 @@
+# Tool: Style Transfer
+ToolStyleTransferFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    CodeUri: functions/tool-style-transfer/dist
+    Handler: index.handler
+    Runtime: nodejs24.x
+    Timeout: 120
+    MemorySize: 1024
+    Description: MCP Tool - Transfer style between images using Stability AI
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        STABILITY_API_KEY: ""
+    Policies:
+      - Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+          - Effect: Allow
+            Action:
+              - ssm:GetParameter
+            Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+    Events:
+      Api:
+        Type: Api
+        Properties:
+          Path: /tools/style-transfer
+          Method: POST
+

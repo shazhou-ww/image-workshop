@@ -1,0 +1,33 @@
+# Tool: Text-to-Image with Stable Diffusion
+ToolTxt2imgStableDiffusionFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    CodeUri: functions/tool-txt2img-stable-diffusion/dist
+    Handler: index.handler
+    Runtime: nodejs24.x
+    Timeout: 120
+    MemorySize: 1024
+    Description: MCP Tool - Text-to-Image generation using Stability AI
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        STABILITY_MODEL: stable-diffusion-xl-1024-v1-0
+        STABILITY_API_KEY: ""
+    Policies:
+      - Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+          - Effect: Allow
+            Action:
+              - ssm:GetParameter
+            Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+    Events:
+      Api:
+        Type: Api
+        Properties:
+          Path: /tools/txt2img-stable-diffusion
+          Method: POST
+

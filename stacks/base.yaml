@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: ImageWorkshop Lambda Functions
+
+Globals:
+  Function:
+    Runtime: nodejs24.x
+    Timeout: 30
+    MemorySize: 512
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        # Stability AI API Key - set via env.json for local, Secrets Manager for prod
+        STABILITY_API_KEY: !Ref StabilityApiKey
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+  StabilityApiKey:
+    Type: String
+    Default: ""
+    Description: Stability AI API Key (leave empty to use Secrets Manager in production)
+    NoEcho: true
+  HuggingFaceApiKey:
+    Type: String
+    Default: ""
+    Description: Hugging Face API Key
+    NoEcho: true
+

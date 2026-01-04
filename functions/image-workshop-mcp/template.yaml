@@ -1,0 +1,63 @@
+# MCP Server - Routes tool calls to individual Lambda functions
+ImageWorkshopMcpFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    CodeUri: functions/image-workshop-mcp/dist
+    Handler: index.handler
+    Runtime: nodejs24.x
+    Timeout: 300
+    MemorySize: 512
+    Description: MCP Server for Image Workshop - routes tool calls to Lambda functions
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        # For local development: set to SAM local URL (e.g., http://127.0.0.1:3000)
+        # In production, leave empty to use Lambda invoke
+        LOCAL_API_BASE_URL: ""
+    Policies:
+      # Allow invoking tool Lambda functions
+      - Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource:
+              - !GetAtt ToolTxt2imgStableDiffusionFunction.Arn
+              - !GetAtt ToolEditEraseFunction.Arn
+              - !GetAtt ToolEditInpaintFunction.Arn
+              - !GetAtt ToolEditOutpaintFunction.Arn
+              - !GetAtt ToolEditSearchAndReplaceFunction.Arn
+              - !GetAtt ToolEditSearchAndRecolorFunction.Arn
+              - !GetAtt ToolEditRemoveBackgroundFunction.Arn
+              - !GetAtt ToolControlSketchFunction.Arn
+              - !GetAtt ToolControlStructureFunction.Arn
+              - !GetAtt ToolControlStyleFunction.Arn
+              - !GetAtt ToolStyleTransferFunction.Arn
+      # Allow reading secrets and parameters
+      - Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:image-workshop/*
+          - Effect: Allow
+            Action:
+              - ssm:GetParameter
+            Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/image-workshop/*
+    # Function URL for direct MCP access
+    FunctionUrlConfig:
+      AuthType: NONE
+      Cors:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - POST
+        AllowHeaders:
+          - Content-Type
+    Events:
+      Api:
+        Type: Api
+        Properties:
+          Path: /mcp
+          Method: POST
+

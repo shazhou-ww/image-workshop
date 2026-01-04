@@ -1,0 +1,19 @@
+# Text Region Selector (Hugging Face)
+TextRegionSelectorFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    CodeUri: functions/text-region-selector/dist
+    Handler: index.handler
+    Runtime: nodejs24.x
+    Timeout: 120
+    MemorySize: 1024
+    Environment:
+      Variables:
+        HUGGINGFACE_API_KEY: !Ref HuggingFaceApiKey
+    Events:
+      Api:
+        Type: Api
+        Properties:
+          Path: /text-region-selector
+          Method: POST
+

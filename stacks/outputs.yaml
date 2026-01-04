@@ -1,0 +1,16 @@
+# ==========================================================================
+# Stack Outputs
+# ==========================================================================
+
+ApiGatewayApi:
+  Description: API Gateway endpoint URL
+  Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+
+McpServerUrl:
+  Description: MCP Server Function URL (for direct MCP access)
+  Value: !GetAtt ImageWorkshopMcpFunctionUrl.FunctionUrl
+
+McpServerApiUrl:
+  Description: MCP Server API Gateway URL
+  Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/mcp
+
